@@ -160,7 +160,7 @@ def convert_frame(frame, metrics, prefix):
         converted.append(f"# TYPE {prom_key} {type_str}\n")
 
         # Emit help descriptor placeholder
-        converted.append(f"# HELP {prom_key} {k}; TODO: generate metric help\n")
+        converted.append(f"# HELP {prom_key} {k}\n")
 
         # Emit value
         converted.append(f"{prom_key} {prom_value} {timestamp}\n")
