@@ -14,8 +14,15 @@ import time
 
 # TODO: use below docker image
 BELOW_BIN = os.environ.get("BELOW", "below")
-DATETIME_KEY = "Datetime"
+
 TIMESTAMP_KEY = "Timestamp"
+IGNORED_KEYS = {
+    TIMESTAMP_KEY,
+    "Datetime",
+    "Hostname",
+    "Kernel Version",
+    "OS Release",
+}
 
 
 class MetricType(Enum):
@@ -32,6 +39,7 @@ class MetricType(Enum):
 
 
 Metric = namedtuple("Metric", "prometheus_key metric_type")
+
 
 NETWORKING_METRICS = {
     "Icmp6InDestUnreachs": Metric("icmp6.in_dest_unreachs", MetricType.COUNTER),
@@ -84,6 +92,34 @@ NETWORKING_METRICS = {
     "IpOutReqs/s": Metric("ip.out_requests_per_sec", MetricType.GAUGE),
 }
 
+SYSTEM_METRICS = {
+    "Blocked Procs": Metric("stat.blocked_processes", MetricType.GAUGE),
+    "Boot Time Epoch": Metric("stat.boot_time_epoch_secs", MetricType.COUNTER),
+    "Context Switches": Metric("stat.context_switches", MetricType.COUNTER),
+    "Free": Metric("mem.free", MetricType.GAUGE),
+    "OOM Kills": Metric("vm.oom_kill", MetricType.COUNTER),
+    "Page In": Metric("vm.pgpgin_per_sec", MetricType.GAUGE),
+    "Page Out": Metric("vm.pgpgout_per_sec", MetricType.GAUGE),
+    "Pgscan Direct": Metric("vm.pgscan_direct_per_sec", MetricType.GAUGE),
+    "Pgscan Kswapd": Metric("vm.pgscan_kswapd_per_sec", MetricType.GAUGE),
+    "Pgsteal Direct": Metric("vm.pgsteal_direct_per_sec", MetricType.GAUGE),
+    "Pgsteal Kswapd": Metric("vm.pgsteal_kswapd_per_sec", MetricType.GAUGE),
+    "Running Procs": Metric("stat.running_processes", MetricType.GAUGE),
+    "Swap In": Metric("vm.pswpin_per_sec", MetricType.GAUGE),
+    "Swap Out": Metric("vm.pswpout_per_sec", MetricType.GAUGE),
+    "System": Metric("cpu.system_pct", MetricType.GAUGE),
+    "Total": Metric("mem.total_gb", MetricType.GAUGE),
+    "Total Interrupts": Metric("tat.total_interrupt_ct", MetricType.COUNTER),
+    "Total Procs": Metric("stat.total_processes", MetricType.COUNTER),
+    "Usage": Metric("cpu.usage_pct", MetricType.GAUGE),
+    "User": Metric("cpu.user_pct", MetricType.GAUGE),
+}
+
+METRICS = [
+    ("network", NETWORKING_METRICS),
+    ("system", SYSTEM_METRICS),
+]
+
 
 def dump(source, category, begin, end):
     """Shells out to below and returns a decoded JSON blob of all data points"""
@@ -120,7 +156,16 @@ def sanitize_metric_name(raw):
     return raw.replace(".", "_")
 
 
-def convert_frame(frame, metrics, prefix):
+def sanitize_metric_value(key, raw):
+    """Sanitizes a metric value to openmetrics specifications"""
+    parts = raw.split()
+    if not parts:
+        raise RuntimeError(f"Invalid value found for key={key}: '{raw}'")
+
+    return parts[0].replace("%", "")
+
+
+def convert_frame(frame, schema, prefix):
     """Converts a single dataframe"""
     warned = set()
     converted = []
@@ -132,22 +177,16 @@ def convert_frame(frame, metrics, prefix):
 
     for k, v in frame.items():
         # Handle unknown metrics
-        metric = metrics.get(k, None)
+        metric = schema.get(k, None)
         if not metric:
-            if k != DATETIME_KEY and k != TIMESTAMP_KEY and k not in warned:
+            if k not in IGNORED_KEYS and k not in warned:
                 logging.warning(f"Unknown key={k} found during conversion")
                 warned.add(k)
             continue
 
-        # Extract value we'll tell prometheus about
-        parts = v.split()
-        if not parts:
-            logging.warning(f"Invalid value found for key={k}: '{v}'")
-            continue
-        prom_value = parts[0]
-
-        # Generate prometheus key
+        # Generate prometheus key and value
         prom_key = sanitize_metric_name(f"{prefix}_{metric.prometheus_key}")
+        prom_value = sanitize_metric_value(k, v)
 
         # Emit type descriptor
         if metric.metric_type == MetricType.GAUGE:
@@ -168,7 +207,7 @@ def convert_frame(frame, metrics, prefix):
     return converted
 
 
-def convert(data, metrics, prefix):
+def convert(data, schema, prefix):
     """
     Convert decoded below dump json data into openmetrics format.
 
@@ -177,8 +216,7 @@ def convert(data, metrics, prefix):
     logging.info(f"Converting {len(data)} frames to OpenMetrics")
     converted = []
     for frame in data:
-        converted += convert_frame(frame, metrics, prefix)
-    converted.append("# EOF\n")
+        converted += convert_frame(frame, schema, prefix)
 
     return converted
 
@@ -209,9 +247,12 @@ def ingest(metrics_file):
 def do_import(begin, end, source, prefix):
     logging.info(f"Importing {source} with prefix {prefix}, from '{begin}' to '{end}'")
     with tempfile.NamedTemporaryFile(mode="w") as f:
-        data = dump(source, "network", begin, end)
-        networking = convert(data, NETWORKING_METRICS, prefix)
-        f.writelines(networking)
+        for category, schema in METRICS:
+            data = dump(source, category, begin, end)
+            metrics = convert(data, schema, prefix)
+            f.writelines(metrics)
+
+        f.write("# EOF\n")
 
         # Need to flush in-memory buffers before doing a cp
         f.flush()
