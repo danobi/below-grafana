@@ -2,6 +2,8 @@
 
 Scripts / tools to visualize [`below`][0] data in grafana.
 
+![Example panel](./images/example.png)
+
 ### Quickstart
 
 To start [Prometheus][2] and [Grafana][3], run:
