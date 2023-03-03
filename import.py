@@ -199,7 +199,7 @@ def ingest(metrics_file):
             "create-blocks-from",
             "openmetrics",
             "/import.txt",
-            "/prometheus/data",
+            "/prometheus",
         ],
         check=True,
     )
