@@ -183,8 +183,8 @@ def convert(data, metrics, prefix):
     return converted
 
 
-def send(metrics_file):
-    """Send metrics file into prometheus"""
+def ingest(metrics_file):
+    """Ingest metrics into prometheus"""
     subprocess.run(
         ["docker", "compose", "cp", metrics_file, "prometheus:/import.txt"], check=True
     )
@@ -210,12 +210,12 @@ def send(metrics_file):
 
 def do_import(begin, end, source, prefix):
     logging.info(f"Importing {source} with prefix {prefix}, from '{begin}' to '{end}'")
-    with tempfile.NamedTemporaryFile() as f:
+    with tempfile.NamedTemporaryFile(mode="w") as f:
         data = dump(source, "network", begin, end)
         networking = convert(data, NETWORKING_METRICS, prefix)
         f.writelines(networking)
 
-        send(f.name)
+        ingest(f.name)
 
 
 def main():
