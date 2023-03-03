@@ -24,6 +24,9 @@ IGNORED_KEYS = {
     "OS Release",
 }
 
+# Set of unknown keys we've already warned about
+WARNED = set()
+
 
 class MetricType(Enum):
     """
@@ -167,7 +170,6 @@ def sanitize_metric_value(key, raw):
     return parts[0].replace("%", "")
 
 
-warned = set()
 def convert_frame(frame, schema, prefix):
     """Converts a single dataframe"""
     converted = []
@@ -181,9 +183,9 @@ def convert_frame(frame, schema, prefix):
         # Handle unknown metrics
         metric = schema.get(k, None)
         if not metric:
-            if k not in IGNORED_KEYS and k not in warned:
-                logging.warning(f"Unknown key={k} found during conversion")
-                warned.add(k)
+            if k not in IGNORED_KEYS and k not in WARNED:
+                logging.warning(f"Unknown key='{k}' found during conversion")
+                WARNED.add(k)
             continue
 
         # Generate prometheus key and value
