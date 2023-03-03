@@ -2,7 +2,7 @@
 
 Scripts / tools to visualize [`below`][0] data in grafana.
 
-### Usage
+### Quickstart
 
 To start [Prometheus][2] and [Grafana][3], run:
 
@@ -10,10 +10,17 @@ To start [Prometheus][2] and [Grafana][3], run:
 $ docker compose up -d
 ```
 
-Then visit `http://localhost:3000` for the grafana UI. The initial
-login/password is `admin` and `admin`, respectively.
+To import some data from the localhost (snapshot import support is
+[coming][4]), run:
 
-TODO(danobi): implement below data import.
+```
+$ ./import.py host --begin "4h ago" --end "2h ago" --prefix localhost
+```
+
+The above commands imports data as keys prefixed with `localhost_`.
+
+To start plotting graphs, visit `http://localhost:3000` for the grafana UI. The
+initial login/password is `admin` and `admin`, respectively.
 
 ### Details
 
@@ -32,3 +39,4 @@ upstreamed into `below-dump` in the future.
 [1]: https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md
 [2]: https://prometheus.io/
 [3]: https://grafana.com/
+[4]: https://github.com/facebookincubator/below/pull/8182
