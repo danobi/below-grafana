@@ -213,6 +213,11 @@ def do_import(begin, end, source, prefix):
         networking = convert(data, NETWORKING_METRICS, prefix)
         f.writelines(networking)
 
+        # Need to flush in-memory buffers before doing a cp
+        f.flush()
+
+        # Need to chmod b/c there's a uid/gid mismatch when copying into container
+        os.chmod(f.name, 0o644)
         ingest(f.name)
 
 
