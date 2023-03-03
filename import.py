@@ -113,6 +113,7 @@ SYSTEM_METRICS = {
     "Total Procs": Metric("stat.total_processes", MetricType.COUNTER),
     "Usage": Metric("cpu.usage_pct", MetricType.GAUGE),
     "User": Metric("cpu.user_pct", MetricType.GAUGE),
+    "SoftIrq": Metric("cpu.softirq_pct", MetricType.GAUGE),
 }
 
 METRICS = [
@@ -137,6 +138,7 @@ def dump(source, category, begin, end):
         begin,
         "--end",
         end,
+        "--everything",
         "--output-format",
         "json",
     ]
@@ -165,9 +167,9 @@ def sanitize_metric_value(key, raw):
     return parts[0].replace("%", "")
 
 
+warned = set()
 def convert_frame(frame, schema, prefix):
     """Converts a single dataframe"""
-    warned = set()
     converted = []
 
     # Extract unix timestamp that all metrics will need
