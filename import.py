@@ -203,9 +203,7 @@ def ingest(metrics_file):
         ],
         check=True,
     )
-    subprocess.run(
-        ["docker", "compose", "restart", "prometheus"], check=True
-    )
+    subprocess.run(["docker", "compose", "restart", "prometheus"], check=True)
 
 
 def do_import(begin, end, source, prefix):
