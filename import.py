@@ -14,6 +14,7 @@ import time
 
 # TODO: use below docker image
 BELOW_BIN = os.environ.get("BELOW", "below")
+DOCKER_BIN = os.environ.get("DOCKER", "docker")
 
 TIMESTAMP_KEY = "Timestamp"
 IGNORED_KEYS = {
@@ -234,11 +235,12 @@ def convert(data, schema, prefix):
 def ingest(metrics_file):
     """Ingest metrics into prometheus"""
     subprocess.run(
-        ["docker", "compose", "cp", metrics_file, "prometheus:/import.txt"], check=True
+        [DOCKER_BIN, "compose", "cp", metrics_file, "prometheus:/import.txt"],
+        check=True,
     )
     subprocess.run(
         [
-            "docker",
+            DOCKER_BIN,
             "compose",
             "exec",
             "prometheus",
@@ -251,7 +253,7 @@ def ingest(metrics_file):
         ],
         check=True,
     )
-    subprocess.run(["docker", "compose", "restart", "prometheus"], check=True)
+    subprocess.run([DOCKER_BIN, "compose", "restart", "prometheus"], check=True)
 
 
 def do_import(begin, end, source, prefix):
