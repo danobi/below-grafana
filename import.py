@@ -268,19 +268,13 @@ def do_import(begin, end, source, prefix):
 
 def main():
     parser = argparse.ArgumentParser(description="Imports below data into prometheus")
-    parser.add_argument("--begin", "-b", help="Start of import interval")
-    parser.add_argument("--end", "-e", help="End of import interval")
+    parser.add_argument("--begin", "-b", default="99 years ago", help="Import start")
+    parser.add_argument("--end", "-e", default="now", help="Import end")
     parser.add_argument("--prefix", "-p", help="Prefix for all imported metrics")
     parser.add_argument("source", help="Path to snapshot or `local`, for local host")
     args = parser.parse_args()
 
-    begin = args.begin if args.begin else "99 years ago"
-    end = args.end if args.end else "now"
-    if args.prefix:
-        prefix = args.prefix
-    else:
-        prefix = "".join(random.choices(string.ascii_lowercase, k=5))
-
+    prefix = args.prefix or "".join(random.choices(string.ascii_lowercase, k=5))
     start = time.time()
     do_import(begin, end, args.source, prefix)
     logging.info(f"Done in {time.time() - start}s")
