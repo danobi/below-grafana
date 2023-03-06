@@ -277,7 +277,7 @@ def main():
     parser.add_argument("--begin", "-b", default="99 years ago", help="Import start")
     parser.add_argument("--end", "-e", default="now", help="Import end")
     parser.add_argument("--prefix", "-p", help="Prefix for all imported metrics")
-    parser.add_argument("source", help="Path to snapshot or `local`, for local host")
+    parser.add_argument("source", help="Path to snapshot or `host`, for local host")
     args = parser.parse_args()
 
     prefix = args.prefix or "".join(random.choices(string.ascii_lowercase, k=5))
