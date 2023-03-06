@@ -167,7 +167,13 @@ def sanitize_metric_value(key, raw):
     if not parts:
         raise RuntimeError(f"Invalid value found for key={key}: '{raw}'")
 
-    return parts[0].replace("%", "")
+    # We don't want the '%' for percentages
+    val = parts[0].replace("%", "")
+    # Usually the very first dataframe will have a bunch of '?'
+    # which can safely be replaced with 0.
+    val = val.replace("?", "0")
+
+    return val
 
 
 def convert_frame(frame, schema, prefix):
