@@ -276,7 +276,7 @@ def main():
 
     prefix = args.prefix or "".join(random.choices(string.ascii_lowercase, k=5))
     start = time.time()
-    do_import(begin, end, args.source, prefix)
+    do_import(args.begin, args.end, args.source, prefix)
     logging.info(f"Done in {time.time() - start}s")
 
     print(f"=========================")
