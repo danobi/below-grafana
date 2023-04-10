@@ -12,8 +12,6 @@ import random
 import tempfile
 import time
 
-# TODO: use below docker image
-BELOW_BIN = os.environ.get("BELOW", "below")
 DOCKER_BIN = os.environ.get("DOCKER", "docker")
 
 TIMESTAMP_KEY = "Timestamp"
@@ -126,17 +124,38 @@ METRICS = [
 ]
 
 
+def get_below_bin(snapshot):
+    """Get the below "binary" to run"""
+    env = os.environ.get("BELOW")
+    if env:
+        return env.split()
+    else:
+        volume_args = []
+        if snapshot:
+            volume_args += ["-v", f"{snapshot}:{snapshot}"]
+
+        return [
+            "docker",
+            "run",
+            "--rm",
+            *volume_args,
+            "below/below:latest",
+        ]
+
+
 def dump(source, category, begin, end):
     """Shells out to below and returns a decoded JSON blob of all data points"""
     if source.lower() == "host":
-        below_source = []
+        below_source = None
+        below_source_args = []
     else:
-        below_source = ["--snapshot", source]
+        below_source = source
+        below_source_args = ["--snapshot", source]
 
     cmd = [
-        BELOW_BIN,
+        *get_below_bin(below_source),
         "dump",
-        *below_source,
+        *below_source_args,
         category,
         "--begin",
         begin,
