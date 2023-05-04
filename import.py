@@ -6,6 +6,7 @@ from enum import Enum
 import json
 import logging
 import os
+from pathlib import Path
 import string
 import subprocess
 import random
@@ -56,8 +57,8 @@ def dump(source, category, begin, end, outfile):
         below_source = None
         below_source_args = []
     else:
-        below_source = source
-        below_source_args = ["--snapshot", source]
+        below_source = str(Path(source).absolute())
+        below_source_args = ["--snapshot", below_source]
 
     cmd = [
         *get_below_bin(below_source),
