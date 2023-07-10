@@ -1,5 +1,7 @@
 # below-grafana
 
+**This repository has been merged into [upstream below][4].**
+
 Scripts / tools to visualize [`below`][0] data in grafana.
 
 ![Example panel](./images/example.png)
@@ -43,3 +45,4 @@ prometheus.
 [1]: https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md
 [2]: https://prometheus.io/
 [3]: https://grafana.com/
+[4]: https://github.com/facebookincubator/below/tree/1e44227414a916920107ac4404a45f4bebf1e514/contrib/grafana
